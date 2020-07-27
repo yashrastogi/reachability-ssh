@@ -40,6 +40,7 @@ func main() {
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
+	Pass = "cleared password"
 
 	conn, err := ssh.Dial("tcp", IP, config)
 	if err != nil {
@@ -69,11 +70,12 @@ func main() {
 	}
 	defer csvFile.Close()
 	writer := csv.NewWriter(csvFile)
-	writer.Write([]string{"IP Address", "Reachability Status", "Traceroute Output"})
+	writer.Write([]string{"IP Address", "Ping Status", "Reachability Status", "Traceroute Output"})
 
-	regex := regexp.MustCompile(`(?i)(unreachable|unable|timed out|15  \* \* \*)`)
+	regex := regexp.MustCompile(fmt.Sprintf(`(?i)(unreachable|unable|timed out|%s  \* \* \*)`, TTL))
 	for fileScanner.Scan() {
-		reachable := "Reachable"
+		reachStatus := "Reachable"
+		pingStatus := "Success"
 		IPcurr := fileScanner.Text()
 		fmt.Printf("Pinging %s\t: ", IPcurr)
 		session, err := conn.NewSession()
@@ -83,8 +85,9 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		if err := session.Run(fmt.Sprintf("ping -c2 %s", IPcurr)); err != nil {
+		if err := session.Run(fmt.Sprintf("ping -c1 %s", IPcurr)); err != nil {
 			fmt.Println("Not Reachable, starting traceroute...")
+			pingStatus = "Failure"
 		} else {
 			fmt.Println("Reachable, starting traceroute...")
 		}
@@ -102,10 +105,10 @@ func main() {
 		traceOut := b.String()
 
 		if regex.MatchString(traceOut) {
-			reachable = "Not Reachable"
+			reachStatus = "Not Reachable"
 		}
 
-		writer.Write([]string{IPcurr, reachable, traceOut})
+		writer.Write([]string{IPcurr, pingStatus, reachStatus, traceOut})
 	}
 	writer.Flush()
 	defer conn.Close()
