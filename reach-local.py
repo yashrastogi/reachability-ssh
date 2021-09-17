@@ -40,7 +40,7 @@ def traceroute(TTL, IPp):
     traceOut = trace_command_out.stdout
     if len(re.findall(f"{IPp}  ", traceOut)) < 1 and os.name != 'nt':
         reachStatus = "Not Reachable"
-    elif len(re.findall(f"{IPp}  ", traceOut)) < 2 and os.name == 'nt':
+    elif len(re.findall(f"{IPp}", traceOut)) < 2 and os.name == 'nt':
         reachStatus = "Not Reachable"
     return [reachStatus, traceOut]
 
