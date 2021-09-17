@@ -44,10 +44,9 @@ def traceroute(client, TTL, IPp):
 
 def getReachability(ssh_client, writer, IPp):
     global ipcount
-    ipcount += 1
     if not args.ping ^ args.traceroute:
         pingStatus = ping(client, IPp)
-        if args.trace_on_ping and pingStatus == "Reachable":
+        if not args.always_trace and pingStatus == "Reachable":
             reachStatus, traceOut = ["NA", "NA"]
             print()
         else:
@@ -61,6 +60,7 @@ def getReachability(ssh_client, writer, IPp):
         pingStatus = ping(client, IPp)
         print()
         writer.writerow([IPp, pingStatus])
+    ipcount += 1
 
 timerStop = False
 
@@ -103,15 +103,15 @@ parser.add_argument(
     "--TTL", help="maximum hops for traceroute", type=int, choices=range(10, 50, 5), default=20
 )
 parser.add_argument(
-    "-w", "--timeout", help="timeout for ping", type=float, default=6
+    "-w", "--timeout", help="timeout for ping", type=float, default=1
 )
 parser.add_argument(
-    "-c", "--count", help="ping count", type=int, default=3
+    "-c", "--count", help="ping count", type=int, default=1
 )
 parser.add_argument(
     "--use-timeout", help="use timeout binary for ping", action="store_true", default=False
 )
-parser.add_argument("-z", "--trace-on-ping", help="get traceroute only if ping fails", action="store_true", default=False)
+parser.add_argument("-z", "--always-trace", help="always get traceroute", action="store_true", default=False)
 args = parser.parse_args()
 
 # =====================================================================================================
